@@ -29,7 +29,7 @@ contract Lottery {
 
     address[] addressIndexes;
     mapping(address => Player) players;
-    Player winner;
+    address winner;
 
     // constructor
     constructor(string memory lotteryName, uint weiToParticipate) {
@@ -48,7 +48,7 @@ contract Lottery {
     function participate(string memory playerName) public payable {
         require(isLotteryLive);
         require(bytes(playerName).length > 0, "Player name must have > 0 length");
-        require(msg.value == minParticipationInWei * 1 wei, "Participation required is not met");
+        require(msg.value >= (minParticipationInWei * 1 wei), "Participation required is not met");
 
         if (isNewPlayer(msg.sender)) {
             entrants += 1;
@@ -77,7 +77,7 @@ contract Lottery {
    }
 
    function getMinimumEntryRequirement() public view returns (uint) {
-       return minParticipationInWei;
+       return minParticipationInWei * 1 wei;
    }
 
    function getEntrants() public view returns (uint) {
@@ -101,7 +101,7 @@ contract Lottery {
         if (isLotteryLive) {
             return address(0);
         } else {
-            return addressIndexes[winner.index];
+            return winner;
         }
     }
 
@@ -110,15 +110,15 @@ contract Lottery {
             uint index = generateRandomNumber() % addressIndexes.length;
             address payable self = payable(address(this));
             uint256 balance = self.balance;
-            payable(addressIndexes[index]).transfer(balance);
             
-            winner.name = players[addressIndexes[index]].name;
+            winner = addressIndexes[index];
+            payable(addressIndexes[index]).transfer(balance);
 
             // Mark the lottery inactive
             isLotteryLive = false;
         
             // event
-            emit WinnerDeclared(winner.name);
+            emit WinnerDeclared(players[winner].name);
         }
     }
 
